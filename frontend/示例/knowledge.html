@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>溯源 - 知识库</title>
+  <!-- 引入外部资源 -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+  
+  <!-- 自定义配置 -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#1A365D',      // 深靛蓝 - 主色调
+            secondary: '#4A6F5D',    // 自然绿 - 进度指示
+            trace: '#8B6B4E',        // 土褐色 - 历史轨迹
+            neutral: '#F5F5F0',      // 米白色 - 背景
+            success: '#2E7D32',
+            warning: '#E65100',
+            danger: '#C62828',
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+          },
+        },
+      }
+    }
+  </script>
+  
+  <style type="text/tailwindcss">
+    @layer utilities {
+      .content-auto {
+        content-visibility: auto;
+      }
+      .doc-card {
+        @apply bg-white rounded-lg p-4 border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 hover:border-trace/30;
+      }
+      .category-item {
+        @apply flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer transition-all duration-300 hover:bg-gray-100 text-sm;
+      }
+      .category-item-active {
+        @apply bg-trace/10 text-trace font-medium;
+      }
+      .source-tag {
+        @apply px-2 py-0.5 bg-primary/10 text-primary text-xs rounded-full inline-block mr-2 mb-2;
+      }
+    }
+  </style>
+</head>
+<body class="bg-neutral h-screen flex overflow-hidden text-gray-800">
+  <!-- 侧边栏 (文档分类) -->
+  <aside class="w-64 bg-white h-full border-r border-gray-200 flex flex-col transition-all duration-300 ease-in-out shadow-sm">
+    <!-- 品牌标识 -->
+    <div class="p-5 border-b border-gray-200">
+      <h1 class="text-xl font-bold text-primary flex items-center gap-2">
+        <i class="fa fa-link"></i>
+        <span>溯源</span>
+      </h1>
+    </div>
+    
+    <!-- 导航菜单 -->
+    <nav class="flex-1 py-4 overflow-y-auto">
+      <ul class="space-y-1 px-3">
+        <li>
+          <a href="index.html" class="flex items-center gap-3 px-4 py-3 rounded-lg cursor-pointer transition-all-300 hover:bg-gray-100">
+            <i class="fa fa-dashboard text-lg w-5 text-center"></i>
+            <span>总览</span>
+          </a>
+        </li>
+        <li>
+          <a href="report.html" class="flex items-center gap-3 px-4 py-3 rounded-lg cursor-pointer transition-all-300 hover:bg-gray-100">
+            <i class="fa fa-file-text-o text-lg w-5 text-center"></i>
+            <span>日报/周报</span>
+          </a>
+        </li>
+        <li>
+          <a href="kanban.html" class="flex items-center gap-3 px-4 py-3 rounded-lg cursor-pointer transition-all-300 hover:bg-gray-100">
+            <i class="fa fa-trello text-lg w-5 text-center"></i>
+            <span>任务看板</span>
+          </a>
+        </li>
+        <li>
+          <a href="knowledge.html" class="flex items-center gap-3 px-4 py-3 rounded-lg cursor-pointer transition-all-300 bg-primary/10 text-primary font-medium">
+            <i class="fa fa-book text-lg w-5 text-center"></i>
+            <span>知识库</span>
+          </a>
+        </li>
+      </ul>
+      
+      <!-- 文档分类 -->
+      <div class="mt-8 px-4">
+        <h3 class="text-xs uppercase text-gray-500 font-semibold mb-3 px-1 flex items-center">
+          <span class="w-1.5 h-1.5 rounded-full bg-trace mr-2"></span>
+          文档分类
+        </h3>
+        <ul class="space-y-1">
+          <li>
+            <div class="category-item category-item-active">
+              <span class="w-2.5 h-2.5 rounded-full bg-trace inline-block"></span>
+              <span>全部文档</span>
+              <span class="ml-auto text-gray-500">24</span>
+            </div>
+          </li>
+          <li>
+            <div class="category-item">
+              <span class="w-2.5 h-2.5 rounded-full bg-primary inline-block"></span>
+              <span>技术文档</span>
+              <span class="ml-auto text-gray-500">12</span>
+            </div>
+          </li>
+          <li>
+            <div class="category-item">
+              <span class="w-2.5 h-2.5 rounded-full bg-secondary inline-block"></span>
+              <span>学习笔记</span>
+              <span class="ml-auto text-gray-500">8</span>
+            </div>
+          </li>
+          <li>
+            <div class="category-item">
+              <span class="w-2.5 h-2.5 rounded-full bg-warning inline-block"></span>
+              <span>设计规范</span>
+              <span class="ml-auto text-gray-500">4</span>
+            </div>
+          </li>
+          <li>
+            <div class="category-item">
+              <span class="w-2.5 h-2.5 rounded-full bg-success inline-block"></span>
+              <span>经验总结</span>
+              <span class="ml-auto text-gray-500">3</span>
+            </div>
+          </li>
+        </ul>
+        
+        <!-- 最近引用 -->
+        <h3 class="text-xs uppercase text-gray-500 font-semibold mb-3 mt-8 px-1 flex items-center">
+          <span class="w-1.5 h-1.5 rounded-full bg-primary mr-2"></span>
+          最近引用
+        </h3>
+        <ul class="space-y-2 text-sm">
+          <li>
+            <a href="#" class="block px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors">
+              React Hooks 用法总结.md
+            </a>
+          </li>
+          <li>
+            <a href="#" class="block px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors">
+              溯源系统UI设计规范.md
+            </a>
+          </li>
+          <li>
+            <a href="#" class="block px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors">
+              数据库设计文档.md
+            </a>
+          </li>
+        </ul>
+      </div>
+    </nav>
+    
+    <!-- 用户信息 -->
+    <div class="p-4 border-t border-gray-200">
+      <div class="flex items-center gap-3">
+        <img src="https://picsum.photos/id/1005/200/200" alt="用户头像" class="w-9 h-9 rounded-full object-cover ring-2 ring-primary/20">
+        <div>
+          <p class="text-sm font-medium">用户名</p>
+          <p class="text-xs text-gray-500">个人版</p>
+        </div>
+        <button class="ml-auto text-gray-500 hover:text-primary transition-colors">
+          <i class="fa fa-cog"></i>
+        </button>
+      </div>
+    </div>
+  </aside>
+  
+  <!-- 主内容区 -->
+  <main class="flex-1 flex flex-col overflow-hidden">
+    <!-- 顶部导航 -->
+    <header class="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6 shadow-sm">
+      <div class="flex items-center gap-4">
+        <button class="lg:hidden text-gray-500 hover:text-primary">
+          <i class="fa fa-bars text-xl"></i>
+        </button>
+        <div class="relative">
+          <input type="text" placeholder="搜索文档标题或内容..." 
+                 class="pl-10 pr-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary w-80 text-sm">
+          <i class="fa fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+        </div>
+      </div>
+      
+      <div class="flex items-center gap-5">
+        <div class="flex items-center gap-3">
+          <button class="p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors" title="筛选文档">
+            <i class="fa fa-filter"></i>
+          </button>
+          <button class="p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors" title="文档排序">
+            <i class="fa fa-sort"></i>
+          </button>
+        </div>
+        
+        <button class="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors text-sm font-medium flex items-center gap-2 shadow-sm">
+          <i class="fa fa-plus"></i>
+          <span>新建文档</span>
+        </button>
+      </div>
+    </header>
+    
+    <!-- 页面内容 -->
+    <div class="flex-1 overflow-auto p-6">
+      <!-- 页面标题与统计 -->
+      <div class="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+          <h2 class="text-[clamp(1.5rem,3vw,2rem)] font-bold text-gray-800">知识溯源库</h2>
+          <p class="text-gray-500 mt-1">追溯知识的来源与应用场景，让每一份文档都可复用</p>
+        </div>
+        <div class="flex items-center gap-4 text-sm">
+          <div class="flex items-center gap-1">
+            <span class="w-3 h-3 rounded-full bg-trace"></span>
+            <span>总文档：24 份</span>
+          </div>
+          <div class="flex items-center gap-1">
+            <span class="w-3 h-3 rounded-full bg-primary"></span>
+            <span>本月新增：5 份</span>
+          </div>
+          <div class="flex items-center gap-1">
+            <span class="w-3 h-3 rounded-full bg-success"></span>
+            <span>被引用：12 次</span>
+          </div>
+        </div>
+      </div>
+      
+      <!-- 文档列表与详情面板 (左右布局) -->
+      <div class="flex gap-6">
+        <!-- 文档列表 -->
+        <div class="flex-1">
+          <!-- 文档筛选标签 -->
+          <div class="flex flex-wrap gap-2 mb-6">
+            <button class="px-3 py-1.5 bg-primary text-white rounded-full text-sm">全部</button>
+            <button class="px-3 py-1.5 bg-white border border-gray-200 hover:border-primary/30 rounded-full text-sm transition-colors">最近更新</button>
+            <button class="px-3 py-1.5 bg-white border border-gray-200 hover:border-primary/30 rounded-full text-sm transition-colors">高引用率</button>
+            <button class="px-3 py-1.5 bg-white border border-gray-200 hover:border-primary/30 rounded-full text-sm transition-colors">未引用</button>
+          </div>
+          
+          <!-- 文档卡片网格 -->
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <!-- 文档卡片 1 (已选中状态) -->
+            <div class="doc-card border-trace/50 bg-trace/5">
+              <div class="flex justify-between items-start mb-3">
+                <span class="text-xs font-medium bg-trace/10 text-trace px-2 py-0.5 rounded">设计规范</span>
+                <div class="flex gap-1">
+                  <button class="text-gray-400 hover:text-primary transition-colors" title="编辑文档">
+                    <i class="fa fa-pencil"></i>
+                  </button>
+                  <button class="text-gray-400 hover:text-primary transition-colors" title="查看引用">
+                    <i class="fa fa-link"></i>
+                  </button>
+                </div>
+              </div>
+              <h4 class="font-medium mb-2 text-primary">溯源系统UI设计规范.md</h4>
+              <p class="text-xs text-gray-600 mb-3 line-clamp-2">
+                定义溯源系统的UI设计标准，包括色彩系统、组件库、交互规范，确保各页面设计一致性。
+              </p>
+              <div class="flex justify-between items-center text-xs text-gray-500">
+                <div class="flex items-center">
+                  <i class="fa fa-calendar-o mr-1"></i>
+                  2023-06-10
+                </div>
+                <div class="flex items-center">
+                  <i class="fa fa-quote-left mr-1 text-trace"></i>
+                  被引用 3 次
+                </div>
+              </div>
+            </div>
+            
+            <!-- 文档卡片 2 -->
+            <div class="doc-card">
+              <div class="flex justify-between items-start mb-3">
+                <span class="text-xs font-medium bg-primary/10 text-primary px-2 py-0.5 rounded">技术文档</span>
+                <div class="flex gap-1">
+                  <button class="text-gray-400 hover:text-primary transition-colors" title="编辑文档">
+                    <i class="fa fa-pencil"></i>
+                  </button>
+                  <button class="text-gray-400 hover:text-primary transition-colors" title="查看引用">
+                    <i class="fa fa-link"></i>
+                  </button>
+                </div>
+              </div>
+              <h4 class="font-medium mb-2">React Hooks 用法总结.md</h4>
+              <p class="text-xs text-gray-600 mb-3 line-clamp-2">
+                总结React Hooks的核心用法，包括useState、useEffect、useContext等，附实际项目示例。
+              </p>
+              <div class="flex justify-between items-center text-xs text-gray-500">
+                <div class="flex items-center">
+                  <i class="fa fa-calendar-o mr-1"></i>
+                  2023-06-08
+                </div>
+                <div class="flex items-center">
+                  <i class="fa fa-quote-left mr-1 text-trace"></i>
+                  被引用 2 次
+                </div>
+              </div>
+            </div>
+            
+            <!-- 文档卡片 3 -->
+            <div class="doc-card">
+              <div class="flex justify-between items-start mb-3">
+                <span class="text-xs font-medium bg-primary/10 text-primary px-2 py-0.5 rounded">技术文档</span>
+                <div class="flex gap-1">
+                  <button class="text-gray-400 hover:text-primary transition-colors" title="编辑文档">
+                    <i class="fa fa-pencil"></i>
+                  </button>
+                  <button class="text-gray-400 hover:text-primary transition-colors" title="查看引用">
+                    <i class="fa fa-link"></i>
+                  </button>
+                </div>
+              </div>
+              <h4 class="font-medium mb-2">数据库设计文档.md</h4>
+              <p class="text-xs text-gray-600 mb-3 line-clamp-2">
+                溯源系统数据库设计方案，包含表结构、字段说明、关联关系及索引设计。
+              </p>
+              <div class="flex justify-between items-center text-xs text-gray-500">
+                <div class="flex items-center">
+                  <i class="fa fa-calendar-o mr-1"></i>
+                  2023-06-07
+                </div>
+                <div class="flex items-center">
+                  <i class="fa fa-quote-left mr-1 text-trace"></i>
+                  被引用 4 次
+                </div>
+              </div>
+            </div>
+            
+            <!-- 文档卡片 4 -->
+            <div class="doc-card">
+              <div class="flex justify-between items-start mb-3">
+                <span class="text-xs font-medium bg-secondary/10 text-secondary px-2 py-0.5 rounded">学习笔记</span>
+                <div class="flex gap-1">
+                  <button class="text-gray-400 hover:text-primary transition-colors" title="编辑文档">
+                    <i class="fa fa-pencil"></i>
+                  </button>
+                  <button class="text-gray-400 hover:text-primary transition-colors" title="查看引用">
+                    <i class="fa fa-link"></i>
+                  </button>
+                </div>
+              </div>
+              <h4 class="font-medium mb-2">Tailwind CSS 实用技巧.md</h4>
+              <p class="text-xs text-gray-600 mb-3 line-clamp-2">
+                记录Tailwind CSS在项目中的实用技巧，包括自定义工具类、响应式适配、性能优化。
+              </p>
+              <div class="flex justify-between items-center text-xs text-gray-500">
+                <div class="flex items-center">
+                  <i class="fa fa-calendar-o mr-1"></i>
+                  2023-06-05
+                </div>
+                <div class="flex items-center">
+                  <i class="fa fa-quote-left mr-1 text-trace"></i>
+                  被引用 1 次
+                </div>
+              </div>
+            </div>
+            
+            <!-- 文档卡片 5 -->
+            <div class="doc-card">
+              <div class="flex justify-between items-start mb-3">
+                <span class="text-xs font-medium bg-success/10 text-success px-2 py-0.5 rounded">经验总结</span>
+                <div class="flex gap-1">
+                  <button class="text-gray-400 hover:text-primary transition-colors" title="编辑文档">
+                    <i class="fa fa-pencil"></i>
+                  </button>
+                  <button class="text-gray-400 hover:text-primary transition-colors" title="查看引用">
+                    <i class="fa fa-link"></i>
+                  </button>
+                </div>
+              </div>
+              <h4 class="font-medium mb-2">前端项目部署流程.md</h4>
+              <p class="text-xs text-gray-600 mb-3 line-clamp-2">
+                总结前端项目从构建到部署的完整流程，包括打包优化、环境配置、服务器部署步骤。
+              </p>
+              <div class="flex justify-between items-center text-xs text-gray-500">
+                <div class="flex items-center">
+                  <i class="fa fa-calendar-o mr-1"></i>
+                  2023-06-03
+                </div>
+                <div class="flex items-center">
+                  <i class="fa fa-quote-left mr-1 text-trace"></i>
+                  被引用 2 次
+                </div>
+              </div>
+            </div>
+            
+            <!-- 文档卡片 6 -->
+            <div class="doc-card">
+              <div class="flex justify-between items-start mb-3">
+                <span class="text-xs font-medium bg-secondary/10 text-secondary px-2 py-0.5 rounded">学习笔记</span>
+                <div class="flex gap-1">
+                  <button class="text-gray-400 hover:text-primary transition-colors" title="编辑文档">
+                    <i class="fa fa-pencil"></i>
+                  </button>
+                  <button class="text-gray-400 hover:text-primary transition-colors" title="查看引用">
+                    <i class="fa fa-link"></i>
+                  </button>
+                </div>
+              </div>
+              <h4 class="font-medium mb-2">TypeScript 类型定义.md</h4>
+              <p class="text-xs text-gray-600 mb-3 line-clamp-2">
+                整理TypeScript常用类型定义技巧，包括接口、泛型、联合类型、交叉类型的实际应用。
+              </p>
+              <div class="flex justify-between items-center text-xs text-gray-500">
+                <div class="flex items-center">
+                  <i class="fa fa-calendar-o mr-1"></i>
+                  2023-06-01
+                </div>
+                <div class="flex items-center">
+                  <i class="fa fa-quote-left mr-1 text-trace"></i>
+                  未引用
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- 文档详情面板 (右侧固定) -->
+        <div class="w-[350px] lg:w-[400px] bg-white rounded-xl shadow-md border border-gray-200 flex flex-col h-fit sticky top-6">
+          <div class="p-4 border-b border-gray-200 flex justify-between items-center">
+            <h3 class="font-semibold text-primary">文档详情</h3>
+            <button class="text-gray-400 hover:text-gray-600">
+              <i class="fa fa-times"></i>
+            </button>
+          </div>
+          
+          <div class="p-4 flex-1 overflow-auto">
+            <!-- 文档基本信息 -->
+            <div class="mb-6">
+              <span class="text-xs font-medium bg-trace/10 text-trace px-2 py-0.5 rounded mb-3 inline-block">设计规范</span>
+              <h4 class="text-lg font-medium mb-2">溯源系统UI设计规范.md</h4>
+              <div class="text-xs text-gray-500 space-y-1 mb-4">
+                <p class="flex items-center">
+                  <i class="fa fa-user-o mr-1.5 w-3 text-center"></i>
+                  创建人：用户名
+                </p>
+                <p class="flex items-center">
+                  <i class="fa fa-calendar-o mr-1.5 w-3 text-center"></i>
+                  创建时间：2023-06-10
+                </p>
+                <p class="flex items-center">
+                  <i class="fa fa-history mr-1.5 w-3 text-center"></i>
+                  最后更新：2023-06-10 16:45
+                </p>
+                <p class="flex items-center">
+                  <i class="fa fa-file-text-o mr-1.5 w-3 text-center"></i>
+                  文件大小：2.4 MB
+                </p>
+              </div>
+            </div>
+            
+            <!-- 知识来源 -->
+            <div class="mb-6">
+              <h5 class="text-sm font-medium mb-3 flex items-center">
+                <i class="fa fa-map-marker text-trace mr-2"></i>
+                知识来源
+              </h5>
+              <div class="bg-gray-50 p-3 rounded-lg text-xs">
+                <p class="text-gray-600 mb-2">本文档基于以下任务创建：</p>
+                <a href="#" class="block text-primary hover:underline mb-1">
+                  任务：完成溯源系统UI设计（2023-06-01创建）
+                </a>
+                <p class="text-gray-600 mt-2 mb-1">参考资料：</p>
+                <ul class="list-disc list-inside space-y-1 text-gray-600">
+                  <li>Ant Design 设计规范</li>
+                  <li>Tailwind CSS 官方文档</li>
+                  <li>企业级UI设计最佳实践</li>
+                </ul>
+              </div>
+            </div>
+            
+            <!-- 应用场景与引用记录 -->
+            <div class="mb-6">
+              <h5 class="text-sm font-medium mb-3 flex items-center">
+                <i class="fa fa-bookmark text-trace mr-2"></i>
+                应用场景与引用
+              </h5>
+              
+              <div class="mb-3">
+                <p class="text-xs text-gray-600 mb-2">适用场景：</p>
+                <div class="flex flex-wrap gap-2">
+                  <span class="source-tag">溯源系统前端开发</span>
+                  <span class="source-tag">UI组件设计</span>
+                  <span class="source-tag">新页面原型设计</span>
+                </div>
+              </div>
+              
+              <div>
+                <p class="text-xs text-gray-600 mb-2">引用记录（3次）：</p>
+                <div class="space-y-2">
+                  <div class="bg-gray-50 p-2 rounded-lg text-xs">
+                    <p class="text-primary font-medium">任务引用</p>
+                    <p class="text-gray-600">设计知识库页面原型（2023-06-10）</p>
+                  </div>
+                  <div class="bg-gray-50 p-2 rounded-lg text-xs">
+                    <p class="text-primary font-medium">日报引用</p>
+                    <p class="text-gray-600">2023-06-10 工作记录（用户名）</p>
+                  </div>
+                  <div class="bg-gray-50 p-2 rounded-lg text-xs">
+                    <p class="text-primary font-medium">文档引用</p>
+                    <p class="text-gray-600">知识库页面交互设计.md（2023-06-11）</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- 版本历史 -->
+            <div>
+              <h5 class="text-sm font-medium mb-3 flex items-center">
+                <i class="fa fa-clock-o text-trace mr-2"></i>
+                版本历史
+              </h5>
+              <div class="space-y-2 text-xs">
+                <div class="flex justify-between items-center p-2 hover:bg-gray-50 rounded-lg transition-colors">
+                  <div>
+                    <p class="font-medium">V1.0</p>
+                    <p class="text-gray-500">初始版本，完成基础规范</p>
+                  </div>
+                  <p class="text-gray-500">2023-06-10</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 操作按钮 -->
+          <div class="p-4 border-t border-gray-200 flex gap-2">
+            <button class="flex-1 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors text-sm font-medium">
+              查看文档
+            </button>
+            <button class="px-3 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+              <i class="fa fa-download text-gray-600"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</body>
+</html>

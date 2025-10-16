@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>溯源 - 个人设置</title>
+  <!-- 引入外部资源 -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+  
+  <!-- 自定义配置 -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#1A365D',      // 深靛蓝 - 主色调
+            secondary: '#4A6F5D',    // 自然绿 - 进度指示
+            trace: '#8B6B4E',        // 土褐色 - 历史轨迹
+            neutral: '#F5F5F0',      // 米白色 - 背景
+            success: '#2E7D32',
+            warning: '#E65100',
+            danger: '#C62828',
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+          },
+        },
+      }
+    }
+  </script>
+  
+  <style type="text/tailwindcss">
+    @layer utilities {
+      .content-auto {
+        content-visibility: auto;
+      }
+      .transition-all-300 {
+        transition: all 300ms ease-in-out;
+      }
+      .sidebar-item {
+        @apply flex items-center gap-3 px-4 py-3 rounded-lg cursor-pointer transition-all-300;
+      }
+      .sidebar-item-active {
+        @apply bg-primary/10 text-primary font-medium;
+      }
+      .setting-item {
+        @apply py-4 border-b border-gray-100 last:border-0;
+      }
+      .form-input {
+        @apply w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary text-sm transition-all-300;
+      }
+      .card-hover {
+        @apply hover:shadow-md transition-all-300;
+      }
+    }
+  </style>
+</head>
+<body class="bg-neutral h-screen flex overflow-hidden text-gray-800">
+  <!-- 侧边栏 -->
+  <aside class="w-64 bg-white h-full border-r border-gray-200 flex flex-col transition-all duration-300 ease-in-out shadow-sm">
+    <!-- 品牌标识 -->
+    <div class="p-5 border-b border-gray-200">
+      <h1 class="text-xl font-bold text-primary flex items-center gap-2">
+        <i class="fa fa-link"></i>
+        <span>溯源</span>
+      </h1>
+    </div>
+    
+    <!-- 导航菜单 -->
+    <nav class="flex-1 py-4 overflow-y-auto">
+      <ul class="space-y-1 px-3">
+        <li>
+          <a href="index.html" class="sidebar-item hover:bg-gray-100">
+            <i class="fa fa-dashboard text-lg w-5 text-center"></i>
+            <span>总览</span>
+          </a>
+        </li>
+        <li>
+          <a href="report.html" class="sidebar-item hover:bg-gray-100">
+            <i class="fa fa-file-text-o text-lg w-5 text-center"></i>
+            <span>日报/周报</span>
+          </a>
+        </li>
+        <li>
+          <a href="kanban.html" class="sidebar-item hover:bg-gray-100">
+            <i class="fa fa-trello text-lg w-5 text-center"></i>
+            <span>任务看板</span>
+          </a>
+        </li>
+        <li>
+          <a href="knowledge.html" class="sidebar-item hover:bg-gray-100">
+            <i class="fa fa-book text-lg w-5 text-center"></i>
+            <span>知识库</span>
+          </a>
+        </li>
+        <li>
+          <a href="user.html" class="sidebar-item sidebar-item-active">
+            <i class="fa fa-user-o text-lg w-5 text-center"></i>
+            <span>个人设置</span>
+          </a>
+        </li>
+      </ul>
+    </nav>
+    
+    <!-- 用户信息 -->
+    <div class="p-4 border-t border-gray-200">
+      <div class="flex items-center gap-3">
+        <img src="https://picsum.photos/id/1005/200/200" alt="用户头像" class="w-9 h-9 rounded-full object-cover ring-2 ring-primary/20">
+        <div>
+          <p class="text-sm font-medium">用户名</p>
+          <p class="text-xs text-gray-500">个人版</p>
+        </div>
+        <button class="ml-auto text-gray-500 hover:text-primary transition-colors" id="logout-btn">
+          <i class="fa fa-sign-out"></i>
+        </button>
+      </div>
+    </div>
+  </aside>
+  
+  <!-- 主内容区 -->
+  <main class="flex-1 flex flex-col overflow-hidden">
+    <!-- 顶部导航 -->
+    <header class="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6 shadow-sm">
+      <div class="flex items-center gap-4">
+        <button class="lg:hidden text-gray-500 hover:text-primary transition-colors" id="mobile-menu-btn">
+          <i class="fa fa-bars text-xl"></i>
+        </button>
+        <div class="relative">
+          <input type="text" placeholder="搜索任务、文档或报告..." 
+                 class="pl-10 pr-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary w-64 text-sm">
+          <i class="fa fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+        </div>
+      </div>
+      
+      <div class="flex items-center gap-5">
+        <button class="relative text-gray-500 hover:text-primary transition-colors">
+          <i class="fa fa-bell text-xl"></i>
+          <span class="absolute -top-1 -right-1 w-4 h-4 bg-danger rounded-full text-white text-xs flex items-center justify-center">3</span>
+        </button>
+        
+        <!-- 用户菜单 -->
+        <div class="relative group">
+          <button class="flex items-center gap-2 focus:outline-none">
+            <img src="https://picsum.photos/id/1005/200/200" alt="用户头像" class="w-8 h-8 rounded-full object-cover">
+            <span class="hidden md:inline text-sm font-medium">用户名</span>
+            <i class="fa fa-cog text-gray-500 hover:text-primary transition-colors cursor-pointer" id="settings-gear"></i>
+          </button>
+          
+          <!-- 用户下拉菜单 -->
+          <div class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-md border border-gray-200 py-2 z-10 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all-300 transform group-hover:translate-y-0 translate-y-2">
+            <a href="user.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors">
+              <i class="fa fa-user-o mr-2 text-gray-500"></i>个人设置
+            </a>
+            <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors">
+              <i class="fa fa-cog mr-2 text-gray-500"></i>系统设置
+            </a>
+            <div class="border-t border-gray-200 my-1"></div>
+            <a href="#" class="block px-4 py-2 text-sm text-danger hover:bg-gray-100 transition-colors">
+              <i class="fa fa-sign-out mr-2"></i>退出登录
+            </a>
+          </div>
+        </div>
+      </div>
+    </header>
+    
+    <!-- 页面内容 -->
+    <div class="flex-1 overflow-y-auto p-6">
+      <!-- 页面标题 -->
+      <div class="mb-6">
+        <h2 class="text-[clamp(1.5rem,3vw,2rem)] font-bold text-gray-800">个人设置</h2>
+        <p class="text-gray-500 mt-1">管理您的个人信息和系统设置</p>
+      </div>
+      
+      <!-- 设置选项卡 -->
+      <div class="mb-6 bg-white rounded-xl p-1 inline-flex shadow-sm border border-gray-200">
+        <button class="px-5 py-2 rounded-lg bg-primary text-white text-sm font-medium transition-colors" data-tab="profile">个人信息</button>
+        <button class="px-5 py-2 rounded-lg text-gray-500 text-sm font-medium hover:bg-gray-50 transition-colors" data-tab="security">账户安全</button>
+        <button class="px-5 py-2 rounded-lg text-gray-500 text-sm font-medium hover:bg-gray-50 transition-colors" data-tab="notifications">通知设置</button>
+        <button class="px-5 py-2 rounded-lg text-gray-500 text-sm font-medium hover:bg-gray-50 transition-colors" data-tab="subscription">会员订阅</button>
+      </div>
+      
+      <!-- 个人信息设置 -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- 左侧：个人资料 -->
+        <div class="lg:col-span-1">
+          <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-6 card-hover">
+            <div class="p-5 border-b border-gray-200">
+              <h3 class="font-semibold">个人资料</h3>
+            </div>
+            
+            <div class="p-5">
+              <!-- 头像设置 -->
+              <div class="flex flex-col items-center mb-6">
+                <div class="relative mb-4 group">
+                  <img src="https://picsum.photos/id/1005/200/200" alt="用户头像" class="w-32 h-32 rounded-full object-cover border-4 border-white shadow-sm transition-all-300 group-hover:shadow-md">
+                  <label class="absolute bottom-0 right-0 w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center cursor-pointer hover:bg-primary/90 transition-all-300 border-2 border-white opacity-90 hover:opacity-100 transform group-hover:scale-110">
+                    <i class="fa fa-camera"></i>
+                    <input type="file" accept="image/*" class="hidden" id="avatar-upload">
+                  </label>
+                </div>
+                <p class="text-sm text-gray-500 text-center">
+                  支持JPG、PNG格式，建议尺寸200x200px
+                </p>
+              </div>
+              
+              <div class="space-y-4">
+                <div>
+                  <label class="block text-sm font-medium text-gray-500 mb-1">用户名</label>
+                  <input type="text" value="用户名" class="form-input">
+                </div>
+                
+                <div>
+                  <label class="block text-sm font-medium text-gray-500 mb-1">昵称</label>
+                  <input type="text" value="溯源管理员" class="form-input">
+                </div>
+                
+                <div>
+                  <label class="block text-sm font-medium text-gray-500 mb-1">邮箱</label>
+                  <input type="email" value="user@example.com" class="form-input">
+                </div>
+                
+                <div>
+                  <label class="block text-sm font-medium text-gray-500 mb-1">个人简介</label>
+                  <textarea rows="3" class="form-input resize-none">负责溯源系统的日常管理与维护，专注于数据追踪与分析。</textarea>
+                </div>
+                
+                <button class="w-full bg-primary text-white py-2.5 rounded-lg hover:bg-primary/90 transition-all-300 text-sm font-medium" id="save-profile">
+                  保存修改
+                </button>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 会员信息 -->
+          <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden card-hover">
+            <div class="p-5 border-b border-gray-200">
+              <h3 class="font-semibold">会员信息</h3>
+            </div>
+            
+            <div class="p-5">
+              <div class="flex items-center justify-between mb-4">
+                <span class="text-sm text-gray-500">当前版本</span>
+                <span class="px-2 py-1 bg-primary/10 text-primary text-xs rounded-full">个人免费版</span>
+              </div>
+              
+              <div class="mb-6">
+                <div class="w-full bg-gray-200 rounded-full h-2 mb-2">
+                  <div class="bg-secondary h-2 rounded-full" style="width: 35%"></div>
+                </div>
+                <div class="flex justify-between text-xs text-gray-500">
+                  <span>已使用35%的功能</span>
+                  <span>升级获取全部功能</span>
+                </div>
+              </div>
+              
+              <div class="mb-4">
+                <span class="text-sm text-gray-500 block mb-2">功能权限</span>
+                <ul class="space-y-2 text-sm">
+                  <li class="flex items-center gap-2">
+                    <i class="fa fa-check text-success"></i>
+                    <span>基础溯源查询</span>
+                  </li>
+                  <li class="flex items-center gap-2">
+                    <i class="fa fa-check text-success"></i>
+                    <span>最多创建30条记录</span>
+                  </li>
+                  <li class="flex items-center gap-2">
+                    <i class="fa fa-check text-success"></i>
+                    <span>数据导出（每月5次）</span>
+                  </li>
+                  <li class="flex items-center gap-2">
+                    <i class="fa fa-times text-gray-400"></i>
+                    <span>高级数据分析</span>
+                  </li>
+                  <li class="flex items-center gap-2">
+                    <i class="fa fa-times text-gray-400"></i>
+                    <span>批量操作功能</span>
+                  </li>
+                  <li class="flex items-center gap-2">
+                    <i class="fa fa-times text-gray-400"></i>
+                    <span>API接口访问</span>
+                  </li>
+                </ul>
+              </div>
+              
+              <button class="w-full bg-secondary text-white py-2.5 rounded-lg hover:bg-secondary/90 transition-all-300 text-sm font-medium">
+                升级到VIP专业版
+              </button>
+              
+              <div class="mt-4 text-center">
+                <span class="text-xs text-gray-500">
+                  VIP版 ¥29.9/月 或 ¥299/年
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- 右侧：其他设置 -->
+        <div class="lg:col-span-2">
+          <!-- 账户安全 -->
+          <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-6 card-hover">
+            <div class="p-5 border-b border-gray-200">
+              <h3 class="font-semibold">账户安全</h3>
+            </div>
+            
+            <div class="p-5">
+              <div class="setting-item">
+                <div class="flex justify-between items-center">
+                  <div>
+                    <h4 class="font-medium">登录密码</h4>
+                    <p class="text-sm text-gray-500 mt-1">上次修改于 3个月前</p>
+                  </div>
+                  <button class="text-primary text-sm hover:underline transition-colors">修改</button>
+                </div>
+              </div>
+              
+              <div class="setting-item">
+                <div class="flex justify-between items-center">
+                  <div>
+                    <h4 class="font-medium">手机号绑定</h4>
+                    <p class="text-sm text-gray-500 mt-1">未绑定手机号，绑定后可用于登录和找回密码</p>
+                  </div>
+                  <button class="text-primary text-sm hover:underline transition-colors">绑定</button>
+                </div>
+              </div>
+              
+              <div class="setting-item">
+                <div class="flex justify-between items-center">
+                  <div>
+                    <h4 class="font-medium">第三方账号关联</h4>
+                    <p class="text-sm text-gray-500 mt-1">关联后可使用以下账号快捷登录</p>
+                  </div>
+                </div>
+                
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-3">
+                  <div class="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:border-primary/30 hover:bg-primary/5 transition-all-300">
+                    <div class="flex items-center gap-2">
+                      <i class="fa fa-github text-gray-600 text-xl"></i>
+                      <span class="text-sm">GitHub</span>
+                    </div>
+                    <button class="text-primary text-sm hover:underline transition-colors">绑定</button>
+                  </div>
+                  
+                  <div class="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:border-primary/30 hover:bg-primary/5 transition-all-300">
+                    <div class="flex items-center gap-2">
+                      <i class="fa fa-google text-gray-600 text-xl"></i>
+                      <span class="text-sm">Google</span>
+                    </div>
+                    <button class="text-primary text-sm hover:underline transition-colors">绑定</button>
+                  </div>
+                  
+                  <div class="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:border-primary/30 hover:bg-primary/5 transition-all-300">
+                    <div class="flex items-center gap-2">
+                      <i class="fa fa-weixin text-gray-600 text-xl"></i>
+                      <span class="text-sm">微信</span>
+                    </div>
+                    <button class="text-primary text-sm hover:underline transition-colors">绑定</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 通知设置 -->
+          <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden card-hover">
+            <div class="p-5 border-b border-gray-200">
+              <h3 class="font-semibold">通知设置</h3>
+            </div>
+            
+            <div class="p-5">
+              <div class="setting-item">
+                <div class="flex justify-between items-center">
+                  <div>
+                    <h4 class="font-medium">溯源记录更新</h4>
+                    <p class="text-sm text-gray-500 mt-1">当追踪的记录有更新时发送通知</p>
+                  </div>
+                  <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" checked class="sr-only peer">
+                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary/30 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                  </label>
+                </div>
+              </div>
+              
+              <div class="setting-item">
+                <div class="flex justify-between items-center">
+                  <div>
+                    <h4 class="font-medium">系统公告</h4>
+                    <p class="text-sm text-gray-500 mt-1">接收系统更新和重要公告</p>
+                  </div>
+                  <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" checked class="sr-only peer">
+                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary/30 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                  </label>
+                </div>
+              </div>
+              
+              <div class="setting-item">
+                <div class="flex justify-between items-center">
+                  <div>
+                    <h4 class="font-medium">会员到期提醒</h4>
+                    <p class="text-sm text-gray-500 mt-1">会员服务即将到期时提醒</p>
+                  </div>
+                  <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" class="sr-only peer">
+                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary/30 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                  </label>
+                </div>
+              </div>
+              
+              <div class="setting-item">
+                <div>
+                  <h4 class="font-medium mb-3">通知方式</h4>
+                  
+                  <div class="space-y-3">
+                    <label class="flex items-center gap-3 p-3 border border-gray-200 rounded-lg hover:border-primary/30 hover:bg-primary/5 transition-all-300 cursor-pointer">
+                      <input type="checkbox" checked class="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded">
+                      <div>
+                        <span class="block font-medium text-sm">站内通知</span>
+                        <span class="text-xs text-gray-500">在系统内显示通知消息</span>
+                      </div>
+                    </label>
+                    
+                    <label class="flex items-center gap-3 p-3 border border-gray-200 rounded-lg hover:border-primary/30 hover:bg-primary/5 transition-all-300 cursor-pointer">
+                      <input type="checkbox" checked class="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded">
+                      <div>
+                        <span class="block font-medium text-sm">邮件通知</span>
+                        <span class="text-xs text-gray-500">发送通知到邮箱 user@example.com</span>
+                      </div>
+                    </label>
+                    
+                    <label class="flex items-center gap-3 p-3 border border-gray-200 rounded-lg hover:border-primary/30 hover:bg-primary/5 transition-all-300 cursor-pointer">
+                      <input type="checkbox" class="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded">
+                      <div>
+                        <span class="block font-medium text-sm">短信通知</span>
+                        <span class="text-xs text-gray-500">需要先绑定手机号</span>
+                      </div>
+                    </label>
+                  </div>
+                </div>
+              </div>
+              
+              <button class="w-full bg-primary text-white py-2.5 rounded-lg hover:bg-primary/90 transition-all-300 text-sm font-medium">
+                保存设置
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    // 齿轮按钮点击跳转到用户页面
+    document.getElementById('settings-gear').addEventListener('click', function(e) {
+      e.stopPropagation(); // 防止触发父元素的下拉菜单
+      window.location.href = 'user.html';
+    });
+    
+    // 选项卡切换功能
+    const tabButtons = document.querySelectorAll('[data-tab]');
+    tabButtons.forEach(button => {
+      button.addEventListener('click', function() {
+        // 移除所有按钮的活跃状态
+        tabButtons.forEach(btn => {
+          btn.classList.remove('bg-primary', 'text-white');
+          btn.classList.add('text-gray-500', 'hover:bg-gray-50');
+        });
+        
+        // 设置当前按钮为活跃状态
+        this.classList.remove('text-gray-500', 'hover:bg-gray-50');
+        this.classList.add('bg-primary', 'text-white');
+        
+        // 这里可以添加内容切换逻辑
+        const tabName = this.getAttribute('data-tab');
+        console.log('切换到:', tabName);
+      });
+    });
+    
+    // 头像上传预览功能
+    const avatarUpload = document.getElementById('avatar-upload');
+    if (avatarUpload) {
+      avatarUpload.addEventListener('change', function(e) {
+        if (e.target.files && e.target.files[0]) {
+          const reader = new FileReader();
+          
+          reader.onload = function(e) {
+            const avatarImg = document.querySelector('.relative.mb-4 img');
+            // 添加过渡动画
+            avatarImg.style.opacity = '0';
+            setTimeout(() => {
+              avatarImg.src = e.target.result;
+              avatarImg.style.opacity = '1';
+            }, 300);
+            
+            // 显示成功提示
+            showToast('头像上传成功，点击保存修改生效');
+          }
+          
+          reader.readAsDataURL(e.target.files[0]);
+        }
+      });
+    }
+    
+    // 保存按钮点击效果
+    document.getElementById('save-profile').addEventListener('click', function() {
+      this.innerHTML = '<i class="fa fa-spinner fa-spin mr-2"></i> 保存中...';
+      this.disabled = true;
+      
+      // 模拟保存操作
+      setTimeout(() => {
+        this.innerHTML = '保存修改';
+        this.disabled = false;
+        showToast('个人信息保存成功');
+      }, 1500);
+    });
+    
+    // 提示消息函数
+    function showToast(message) {
+      // 创建提示元素
+      const toast = document.createElement('div');
+      toast.className = 'fixed bottom-5 right-5 bg-gray-800 text-white px-4 py-2 rounded-lg shadow-lg z-50 transform translate-y-10 opacity-0 transition-all-300';
+      toast.textContent = message;
+      
+      // 添加到页面
+      document.body.appendChild(toast);
+      
+      // 显示动画
+      setTimeout(() => {
+        toast.classList.remove('translate-y-10', 'opacity-0');
+      }, 10);
+      
+      // 3秒后隐藏
+      setTimeout(() => {
+        toast.classList.add('translate-y-10', 'opacity-0');
+        setTimeout(() => {
+          document.body.removeChild(toast);
+        }, 300);
+      }, 3000);
+    }
+  </script>
+</body>
+</html>

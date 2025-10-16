@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>溯源 - 进度管理系统</title>
+  <!-- 引入外部资源 -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+  
+  <!-- 自定义配置 -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#1A365D',      // 深靛蓝 - 主色调
+            secondary: '#4A6F5D',    // 自然绿 - 进度指示
+            trace: '#8B6B4E',        // 土褐色 - 历史轨迹
+            neutral: '#F5F5F0',      // 米白色 - 背景
+            success: '#2E7D32',
+            warning: '#E65100',
+            danger: '#C62828',
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+          },
+        },
+      }
+    }
+  </script>
+  
+  <style type="text/tailwindcss">
+    @layer utilities {
+      .content-auto {
+        content-visibility: auto;
+      }
+      .timeline-line {
+        @apply absolute left-3 top-4 bottom-0 w-0.5 bg-gray-200;
+      }
+      .timeline-dot {
+        @apply absolute left-3 top-4 w-2 h-2 rounded-full bg-primary transform -translate-x-1/2;
+      }
+      .node-hover {
+        @apply hover:shadow-md hover:border-primary/50 transition-all duration-300;
+      }
+      .trace-link {
+        @apply text-primary underline decoration-dotted underline-offset-4 hover:decoration-solid;
+      }
+    }
+  </style>
+</head>
+<body class="bg-neutral h-screen flex overflow-hidden text-gray-800">
+  <!-- 侧边栏 -->
+  <aside class="w-64 bg-white h-full border-r border-gray-200 flex flex-col transition-all duration-300 ease-in-out shadow-sm">
+    <!-- 品牌标识 -->
+    <div class="p-5 border-b border-gray-200">
+      <h1 class="text-xl font-bold text-primary flex items-center gap-2">
+        <i class="fa fa-link"></i>
+        <span>溯源</span>
+      </h1>
+    </div>
+    
+    <!-- 导航菜单 -->
+    <nav class="flex-1 py-4 overflow-y-auto">
+      <ul class="space-y-1 px-3">
+        <li>
+          <a href="index.html" class="flex items-center gap-3 px-4 py-3 rounded-lg cursor-pointer transition-all-300 bg-primary/10 text-primary font-medium">
+            <i class="fa fa-dashboard text-lg w-5 text-center"></i>
+            <span>总览</span>
+          </a>
+        </li>
+        <li>
+          <a href="report.html" class="flex items-center gap-3 px-4 py-3 rounded-lg cursor-pointer transition-all-300 hover:bg-gray-100">
+            <i class="fa fa-file-text-o text-lg w-5 text-center"></i>
+            <span>日报/周报</span>
+          </a>
+        </li>
+        <li>
+          <a href="kanban.html" class="flex items-center gap-3 px-4 py-3 rounded-lg cursor-pointer transition-all-300 hover:bg-gray-100">
+            <i class="fa fa-trello text-lg w-5 text-center"></i>
+            <span>任务看板</span>
+          </a>
+        </li>
+        <li>
+          <a href="knowledge.html" class="flex items-center gap-3 px-4 py-3 rounded-lg cursor-pointer transition-all-300 hover:bg-gray-100">
+            <i class="fa fa-book text-lg w-5 text-center"></i>
+            <span>知识库</span>
+          </a>
+        </li>
+      </ul>
+      
+      <!-- 任务分类 -->
+      <div class="mt-8 px-4">
+        <h3 class="text-xs uppercase text-gray-500 font-semibold mb-2 px-1 flex items-center">
+          <span class="w-1.5 h-1.5 rounded-full bg-trace mr-2"></span>
+          任务分类
+        </h3>
+        <ul class="space-y-1">
+          <li>
+            <a href="#" class="flex items-center gap-3 px-4 py-2.5 rounded-lg cursor-pointer transition-all-300 hover:bg-gray-100 text-sm">
+              <span class="w-3 h-3 rounded-full bg-primary inline-block"></span>
+              <span>工作项目</span>
+            </a>
+          </li>
+          <li>
+            <a href="#" class="flex items-center gap-3 px-4 py-2.5 rounded-lg cursor-pointer transition-all-300 hover:bg-gray-100 text-sm">
+              <span class="w-3 h-3 rounded-full bg-secondary inline-block"></span>
+              <span>学习提升</span>
+            </a>
+          </li>
+          <li>
+            <a href="#" class="flex items-center gap-3 px-4 py-2.5 rounded-lg cursor-pointer transition-all-300 hover:bg-gray-100 text-sm">
+              <span class="w-3 h-3 rounded-full bg-trace inline-block"></span>
+              <span>个人事务</span>
+            </a>
+          </li>
+        </ul>
+      </div>
+    </nav>
+    
+    <!-- 用户信息 -->
+    <div class="p-4 border-t border-gray-200">
+      <div class="flex items-center gap-3">
+        <img src="https://picsum.photos/id/1005/200/200" alt="用户头像" class="w-9 h-9 rounded-full object-cover ring-2 ring-primary/20">
+        <div>
+          <p class="text-sm font-medium">用户名</p>
+          <p class="text-xs text-gray-500">个人版</p>
+        </div>
+        <button class="ml-auto text-gray-500 hover:text-primary transition-colors">
+          <i class="fa fa-cog"></i>
+        </button>
+      </div>
+    </div>
+  </aside>
+  
+  <!-- 主内容区 -->
+  <main class="flex-1 flex flex-col overflow-hidden">
+    <!-- 顶部导航 -->
+    <header class="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6 shadow-sm">
+      <div class="flex items-center gap-4">
+        <button class="lg:hidden text-gray-500 hover:text-primary">
+          <i class="fa fa-bars text-xl"></i>
+        </button>
+        <div class="relative">
+          <input type="text" placeholder="搜索任务、文档或报告..." 
+                 class="pl-10 pr-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary w-64 text-sm">
+          <i class="fa fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+        </div>
+      </div>
+      
+      <div class="flex items-center gap-5">
+        <div class="hidden md:flex items-center gap-3">
+          <button class="p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors">
+            <i class="fa fa-filter"></i>
+          </button>
+          <button class="p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors">
+            <i class="fa fa-history"></i>
+          </button>
+        </div>
+        
+        <button class="relative text-gray-500 hover:text-primary transition-colors">
+          <i class="fa fa-bell text-xl"></i>
+          <span class="absolute -top-1 -right-1 w-4 h-4 bg-danger rounded-full text-white text-xs flex items-center justify-center">3</span>
+        </button>
+        <button class="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors text-sm font-medium flex items-center gap-2 shadow-sm">
+          <i class="fa fa-plus"></i>
+          <span>新建项目</span>
+        </button>
+      </div>
+    </header>
+    
+    <!-- 页面内容 -->
+    <div class="flex-1 overflow-auto p-6">
+      <!-- 页面标题与时间追踪 -->
+      <div class="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+          <h2 class="text-[clamp(1.5rem,3vw,2rem)] font-bold text-gray-800">工作总览</h2>
+          <p class="text-gray-500 mt-1">追踪所有项目的源头与进展</p>
+        </div>
+        <div class="flex items-center gap-3 text-sm">
+          <span class="text-gray-500">时间范围:</span>
+          <select class="border border-gray-200 rounded-lg px-3 py-1.5 bg-white">
+            <option>本周</option>
+            <option selected>本月</option>
+            <option>全年</option>
+          </select>
+        </div>
+      </div>
+      
+      <!-- 数据卡片 -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-6">
+        <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-200 hover:shadow-md transition-all duration-300">
+          <div class="flex justify-between items-start">
+            <div>
+              <p class="text-gray-500 text-sm">进行中任务</p>
+              <h3 class="text-2xl font-bold mt-1">6</h3>
+              <p class="text-secondary text-xs mt-2 flex items-center">
+                <i class="fa fa-arrow-right mr-1"></i> 3 项即将到期
+              </p>
+            </div>
+            <div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+              <i class="fa fa-tasks"></i>
+            </div>
+          </div>
+        </div>
+        
+        <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-200 hover:shadow-md transition-all duration-300">
+          <div class="flex justify-between items-start">
+            <div>
+              <p class="text-gray-500 text-sm">已完成任务</p>
+              <h3 class="text-2xl font-bold mt-1">18</h3>
+              <p class="text-success text-xs mt-2 flex items-center">
+                <i class="fa fa-arrow-up mr-1"></i> 完成率 90%
+              </p>
+            </div>
+            <div class="w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center text-success">
+              <i class="fa fa-check-square-o"></i>
+            </div>
+          </div>
+        </div>
+        
+        <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-200 hover:shadow-md transition-all duration-300">
+          <div class="flex justify-between items-start">
+            <div>
+              <p class="text-gray-500 text-sm">即将到期</p>
+              <h3 class="text-2xl font-bold mt-1">4</h3>
+              <p class="text-warning text-xs mt-2 flex items-center">
+                <i class="fa fa-exclamation-circle mr-1"></i> 需要优先处理
+              </p>
+            </div>
+            <div class="w-10 h-10 rounded-lg bg-warning/10 flex items-center justify-center text-warning">
+              <i class="fa fa-clock-o"></i>
+            </div>
+          </div>
+        </div>
+        
+        <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-200 hover:shadow-md transition-all duration-300">
+          <div class="flex justify-between items-start">
+            <div>
+              <p class="text-gray-500 text-sm">知识文档</p>
+              <h3 class="text-2xl font-bold mt-1">24</h3>
+              <p class="text-trace text-xs mt-2 flex items-center">
+                <i class="fa fa-link mr-1"></i> 8 项被引用
+              </p>
+            </div>
+            <div class="w-10 h-10 rounded-lg bg-trace/10 flex items-center justify-center text-trace">
+              <i class="fa fa-book"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- 图表和任务区域 -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- 进度图表 -->
+        <div class="lg:col-span-1 bg-white rounded-xl p-5 shadow-sm border border-gray-200">
+          <div class="flex justify-between items-center mb-5">
+            <h3 class="font-semibold flex items-center">
+              <span class="w-2 h-2 rounded-full bg-primary mr-2"></span>
+              任务完成轨迹
+            </h3>
+            <select class="text-sm border border-gray-200 rounded-lg px-2 py-1">
+              <option>本周</option>
+              <option selected>本月</option>
+              <option>全年</option>
+            </select>
+          </div>
+          <div class="h-64">
+            <canvas id="progressChart"></canvas>
+          </div>
+        </div>
+        
+        <!-- 今日推进任务 -->
+        <div class="lg:col-span-2 bg-white rounded-xl p-5 shadow-sm border border-gray-200">
+          <div class="flex justify-between items-center mb-5">
+            <h3 class="font-semibold flex items-center">
+              <span class="w-2 h-2 rounded-full bg-secondary mr-2"></span>
+              今日推进任务
+            </h3>
+            <button class="text-primary text-sm hover:underline">查看全部</button>
+          </div>
+          
+          <div class="space-y-4">
+            <!-- 任务项 -->
+            <div class="border border-gray-200 rounded-lg p-4 node-hover">
+              <div class="flex justify-between items-start">
+                <div>
+                  <div class="flex items-center gap-2 mb-1">
+                    <span class="w-2 h-2 rounded-full bg-primary"></span>
+                    <h4 class="font-medium">完成溯源系统设计</h4>
+                  </div>
+                  <p class="text-sm text-gray-500 mb-3">设计UI组件和交互逻辑，突出溯源概念</p>
+                  
+                  <!-- 进度条 -->
+                  <div class="w-full bg-gray-100 rounded-full h-2 mb-1 overflow-hidden">
+                    <div class="bg-primary h-2 rounded-full" style="width: 75%"></div>
+                  </div>
+                  <div class="flex justify-between text-xs text-gray-500">
+                    <span>75% 完成</span>
+                    <span>
+                      <i class="fa fa-history mr-1 text-trace"></i>
+                      截止日期: 2023-06-15
+                    </span>
+                  </div>
+                </div>
+                <span class="px-2 py-1 bg-primary/10 text-primary text-xs rounded-full">高优先级</span>
+              </div>
+            </div>
+            
+            <div class="border border-gray-200 rounded-lg p-4 node-hover">
+              <div class="flex justify-between items-start">
+                <div>
+                  <div class="flex items-center gap-2 mb-1">
+                    <span class="w-2 h-2 rounded-full bg-secondary"></span>
+                    <h4 class="font-medium">学习React Hooks高级用法</h4>
+                  </div>
+                  <p class="text-sm text-gray-500 mb-3">掌握useContext、useReducer等高级钩子</p>
+                  
+                  <!-- 进度条 -->
+                  <div class="w-full bg-gray-100 rounded-full h-2 mb-1 overflow-hidden">
+                    <div class="bg-secondary h-2 rounded-full" style="width: 40%"></div>
+                  </div>
+                  <div class="flex justify-between text-xs text-gray-500">
+                    <span>40% 完成</span>
+                    <span>
+                      <i class="fa fa-history mr-1 text-trace"></i>
+                      截止日期: 2023-06-20
+                    </span>
+                  </div>
+                </div>
+                <span class="px-2 py-1 bg-secondary/10 text-secondary text-xs rounded-full">中优先级</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- 任务看板预览 -->
+      <div class="mt-6 bg-white rounded-xl p-5 shadow-sm border border-gray-200">
+        <div class="flex justify-between items-center mb-5">
+          <h3 class="font-semibold flex items-center">
+            <span class="w-2 h-2 rounded-full bg-trace mr-2"></span>
+            任务溯源看板
+          </h3>
+          <button class="text-primary text-sm hover:underline">进入看板</button>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <!-- 待办 -->
+          <div>
+            <div class="flex items-center gap-2 mb-3">
+              <span class="w-3 h-3 rounded-full bg-gray-400"></span>
+              <h4 class="font-medium text-sm">待办 (4)</h4>
+            </div>
+            <div class="space-y-3">
+              <div class="p-3 bg-gray-50 rounded-lg border border-gray-200 text-sm node-hover">
+                <div class="flex justify-between items-start mb-2">
+                  <span class="px-1.5 py-0.5 bg-danger/10 text-danger text-xs rounded">高优先级</span>
+                  <i class="fa fa-ellipsis-h text-gray-400"></i>
+                </div>
+                <p class="font-medium mb-2">准备技术面试</p>
+                <p class="text-gray-500 text-xs flex items-center">
+                  <i class="fa fa-history mr-1 text-trace"></i>
+                  截止日期: 2023-06-18
+                </p>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 进行中 -->
+          <div>
+            <div class="flex items-center gap-2 mb-3">
+              <span class="w-3 h-3 rounded-full bg-warning"></span>
+              <h4 class="font-medium text-sm">进行中 (2)</h4>
+            </div>
+            <!-- 任务卡片 -->
+            <div class="space-y-3">
+              <div class="p-3 bg-gray-50 rounded-lg border border-gray-200 text-sm node-hover">
+                <div class="flex justify-between items-start mb-2">
+                  <span class="px-1.5 py-0.5 bg-warning/10 text-warning text-xs rounded">中优先级</span>
+                  <i class="fa fa-ellipsis-h text-gray-400"></i>
+                </div>
+                <p class="font-medium mb-2">购买新书籍</p>
+                <p class="text-gray-500 text-xs flex items-center">
+                  <i class="fa fa-history mr-1 text-trace"></i>
+                  截止日期: 2023-06-25
+                </p>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 已完成 -->
+          <div>
+            <div class="flex items-center gap-2 mb-3">
+              <span class="w-3 h-3 rounded-full bg-success"></span>
+              <h4 class="font-medium text-sm">已完成 (1)</h4>
+            </div>
+            <!-- 任务卡片 -->
+            <div class="space-y-3">
+              <div class="p-3 bg-gray-50 rounded-lg border border-gray-200 text-sm node-hover">
+                <div class="flex justify-between items-start mb-2">
+                  <span class="px-1.5 py-0.5 bg-success/10 text-success text-xs rounded">已完成</span>
+                  <i class="fa fa-ellipsis-h text-gray-400"></i>
+                </div>
+                <p class="font-medium mb-2">整理电脑文件</p>
+                <p class="text-gray-500 text-xs flex items-center">
+                  <i class="fa fa-history mr-1 text-trace"></i>
+                  完成于: 2023-06-10
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+  
+  <!-- 右侧详情面板 (默认隐藏) -->
+  <aside class="w-80 bg-white h-full border-l border-gray-200 hidden lg:block overflow-y-auto" id="detail-panel">
+    <div class="p-5 border-b border-gray-200 flex justify-between items-center">
+      <h3 class="font-semibold">任务详情</h3>
+      <button class="text-gray-400 hover:text-gray-600">
+        <i class="fa fa-times"></i>
+      </button>
+    </div>
+    
+    <div class="p-5">
+      <!-- 任务详情内容 -->
+      <div class="mb-5">
+        <span class="px-2 py-1 bg-primary/10 text-primary text-xs rounded-full">高优先级</span>
+        <h4 class="text-lg font-semibold mt-3 mb-2">完成溯源系统设计</h4>
+        <p class="text-sm text-gray-500">为前端界面设计UI组件和交互逻辑，制定开发计划和技术方案。</p>
+      </div>
+      
+      <div class="space-y-4 mb-6">
+        <div class="flex justify-between text-sm">
+          <span class="text-gray-500">创建日期</span>
+          <span>2023-06-01</span>
+        </div>
+        <div class="flex justify-between text-sm">
+          <span class="text-gray-500">截止日期</span>
+          <span class="text-warning">2023-06-15</span>
+        </div>
+        <div class="flex justify-between text-sm">
+          <span class="text-gray-500">创建人</span>
+          <span>用户名</span>
+        </div>
+        <div class="flex justify-between text-sm">
+          <span class="text-gray-500">任务分类</span>
+          <span class="flex items-center gap-1">
+            <span class="w-2 h-2 rounded-full bg-primary"></span>
+            <span>工作项目</span>
+          </span>
+        </div>
+      </div>
+      
+      <!-- 任务历史记录 -->
+      <div>
+        <h5 class="font-medium mb-3 flex items-center">
+          <i class="fa fa-history text-trace mr-2"></i>
+          任务历史轨迹
+        </h5>
+        <div class="space-y-4 relative">
+          <div class="timeline-line"></div>
+          
+          <div class="relative pl-8">
+            <div class="timeline-dot"></div>
+            <p class="text-sm">状态更新为 <span class="text-primary font-medium">进行中</span></p>
+            <p class="text-xs text-gray-500 mt-1">2023-06-10 09:30</p>
+          </div>
+          
+          <div class="relative pl-8">
+            <div class="timeline-dot"></div>
+            <p class="text-sm">添加了截止日期 <span class="text-warning font-medium">2023-06-15</span></p>
+            <p class="text-xs text-gray-500 mt-1">2023-06-05 14:20</p>
+          </div>
+          
+          <div class="relative pl-8">
+            <div class="timeline-dot"></div>
+            <p class="text-sm">任务创建</p>
+            <p class="text-xs text-gray-500 mt-1">2023-06-01 10:00</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </aside>
+  
+  <script>
+    // 初始化进度图表
+    document.addEventListener('DOMContentLoaded', function() {
+      const ctx = document.getElementById('progressChart').getContext('2d');
+      const chart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: ['1日', '5日', '10日', '15日', '20日', '25日', '30日'],
+          datasets: [{
+            label: '完成任务',
+            data: [2, 5, 8, 12, 15, 18, 18],
+            borderColor: '#1A365D',
+            backgroundColor: 'rgba(26, 54, 93, 0.1)',
+            tension: 0.4,
+            fill: true
+          }, {
+            label: '新增任务',
+            data: [3, 6, 9, 13, 16, 19, 22],
+            borderColor: '#8B6B4E',
+            backgroundColor: 'transparent',
+            tension: 0.4,
+            borderDash: [5, 5]
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: {
+                boxWidth: 10,
+                usePointStyle: true
+              }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              grid: {
+                display: true,
+                color: 'rgba(0, 0, 0, 0.05)'
+              }
+            },
+            x: {
+              grid: {
+                display: false
+              }
+            }
+          }
+        }
+      });
+    });
+  </script>
+</body>
+</html>
