@@ -80,23 +80,21 @@ public class AuthController {
     }
 
     @GetMapping("/me")
-    public ResponseEntity<Map<String ,Object>> getCurrentUser(
-            @RequestHeader("Authorization") String token){
-        //获取token
+    public ResponseEntity<Map<String, Object>> getCurrentUser(org.springframework.security.core.Authentication authentication) {
         try {
-            String username = jwtUtil.extractUsername(token.replace("Bearer",""));
+            String username = authentication.getName();
             User user = userService.findByUsername(username);
             user.setPassword(null);
 
-            Map<String,Object> response = new HashMap<>();
-            response.put("code",200);
-            response.put("msg","验证成功");
-            response.put("data",user);
+            Map<String, Object> response = new HashMap<>();
+            response.put("code", 200);
+            response.put("msg", "验证成功");
+            response.put("data", user);
             return ResponseEntity.ok(response);
-        }catch (Exception e){
-            Map<String,Object> error = new HashMap<>();
-            error.put("code",401);
-            error.put("msg","Token无效或已过期");
+        } catch (Exception e) {
+            Map<String, Object> error = new HashMap<>();
+            error.put("code", 401);
+            error.put("msg", "Token无效或已过期");
             return ResponseEntity.ok(error);
         }
     }
