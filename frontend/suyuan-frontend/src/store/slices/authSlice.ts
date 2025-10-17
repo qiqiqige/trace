@@ -7,49 +7,52 @@ const initialState: AuthState = {
   error: null,        
   isAuthenticated: false 
 };
-
+const BASE_URL = 'http://127.0.0.1:8081/api/auth';
 // 3. 创建异步 Action（登录请求）
 // createAsyncThunk 用于处理异步操作（如调用后端接口）
 // 泛型参数：1. Action 类型名；2. 传入的参数类型（LoginFormData）；3. 返回值类型（ApiResponse<User>）
 export const loginAsync = createAsyncThunk<
-  ApiResponse<User>,  // 后端返回的响应类型
-  LoginFormData,// 前端传入的登录参数（用户名、密码）
+  ApiResponse<User>,
+  LoginFormData,
   { rejectValue : ApiResponse<null>}
 >('auth/login', async (loginData, { rejectWithValue }) => {
   try {
-    // TODO：后续对接真实后端接口，这里先模拟请求
-    // 模拟后端接口延迟（1秒）
-    const response = await new Promise<ApiResponse<User>>((resolve) => {
-      setTimeout(() => {
-        // 模拟登录成功（实际项目中这里会用 axios 调用后端 /api/login 接口）
-        resolve({
-          code: 200,
-          msg: '登录成功',
-          data: {
-            id: 1,
-            username: loginData.username,
-            phone: '13800138000', // 模拟后端返回的手机号
-            token: 'fake-token-123456', // 模拟 Token（实际是后端生成的 JWT）
-            role: 'user',
-            createdAt: '2024-10-01 10:00:00'
-          }
-        });
-      }, 1000);
+    const res = await fetch(`${BASE_URL}/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: loginData.username, password: loginData.password })
     });
+    const json = await res.json();
 
-    // 登录成功：将 Token 存入 localStorage（持久化，刷新页面不丢失）
-    localStorage.setItem('token', response.data.token);
-    return response; // 结果会传入 fulfilled 回调
+    if (json.code !== 200) {
+      return rejectWithValue({ code: json.code ?? 500, msg: json.msg ?? '登录失败', data: null });
+    }
+
+    const backendUser = json.data?.user ?? {};
+    const token = json.data?.token ?? '';
+
+    const roleStr: string = (backendUser.role ?? '').toString().toLowerCase();
+    const role: 'admin'|'user'|'guest' =
+      roleStr.includes('admin') ? 'admin' :
+      roleStr.includes('user') ? 'user' : 'guest';
+
+    const mappedUser: User = {
+      id: backendUser.id as any,
+      username: backendUser.username ?? loginData.username,
+      phone: backendUser.phone ?? undefined,
+      avatar: backendUser.avatar ?? undefined,
+      token,
+      role,
+      createdAt: backendUser.createdAT ? String(backendUser.createdAT) : new Date().toISOString()
+    };
+
+    localStorage.setItem('token', token);
+
+    return { code: json.code, msg: json.msg, data: mappedUser };
   } catch (error) {
-    // 登录失败：返回错误信息（会传入 rejected 回调）
-    return rejectWithValue({
-      code: 500,
-      msg: '登录失败，请检查用户名或密码',
-      data: null
-    } as ApiResponse<null>);
+    return rejectWithValue({ code: 500, msg: '登录失败，请检查网络或稍后重试', data: null });
   }
 });
-
 // 4. 创建异步 Action（注册请求）
 export const registerAsync = createAsyncThunk<
   ApiResponse<User>,
@@ -57,31 +60,40 @@ export const registerAsync = createAsyncThunk<
   { rejectValue : ApiResponse<null>}
 >('auth/register', async (registerData, { rejectWithValue }) => {
   try {
-    // 模拟后端注册接口（实际项目中调用 /api/register）
-    const response = await new Promise<ApiResponse<User>>((resolve) => {
-      setTimeout(() => {
-        resolve({
-          code: 200,
-          msg: '注册成功',
-          data: {
-            id: 2,
-            username: registerData.username,
-            phone: registerData.phone,
-            token: 'fake-token-654321',
-            role: 'user',
-            createdAt: new Date().toLocaleString()
-          }
-        });
-      }, 1000);
+    const res = await fetch(`${BASE_URL}/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        username: registerData.username,
+        password: registerData.password,
+        phone: registerData.phone
+      })
     });
+    const json = await res.json();
 
-    return response;
+    if (json.code !== 200) {
+      return rejectWithValue({ code: json.code ?? 500, msg: json.msg ?? '注册失败', data: null });
+    }
+
+    const backendUser = json.data ?? {};
+    const roleStr: string = (backendUser.role ?? '').toString().toLowerCase();
+    const role: 'admin'|'user'|'guest' =
+      roleStr.includes('admin') ? 'admin' :
+      roleStr.includes('user') ? 'user' : 'guest';
+
+    const mappedUser: User = {
+      id: backendUser.id as any,
+      username: backendUser.username ?? registerData.username,
+      phone: backendUser.phone ?? registerData.phone,
+      avatar: backendUser.avatar ?? undefined,
+      token: '', // 注册不返回 token，这里占位以满足类型
+      role,
+      createdAt: backendUser.createdAT ? String(backendUser.createdAT) : new Date().toISOString()
+    };
+
+    return { code: json.code, msg: json.msg, data: mappedUser };
   } catch (error) {
-    return rejectWithValue({
-      code: 500,
-      msg: '注册失败，用户名或手机号已存在',
-      data: null
-    } as ApiResponse<null>);
+    return rejectWithValue({ code: 500, msg: '注册失败，请稍后重试', data: null });
   }
 });
 
