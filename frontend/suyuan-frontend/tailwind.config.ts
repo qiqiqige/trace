@@ -8,13 +8,13 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        primary: '#1A365D',      // 深靛蓝 - 主色调
-        secondary: '#4A6F5D',    // 自然绿 - 进度指示
-        trace: '#8B6B4E',        // 土褐色 - 历史轨迹
-        neutral: '#F5F5F0',      // 米白色 - 背景
-        success: '#2E7D32',
-        warning: '#E65100',
-        danger: '#C62828',
+        primary: '#0B1220',      // 夜空蓝 - 主背景
+        secondary: '#7C3AED',    // 灵光紫 - 品牌强调
+        trace: '#38BDF8',        // 天蓝光 - 高亮/动效
+        neutral: '#E6EAF2',      // 雪灰白 - 文案/图标
+        success: '#10B981',
+        warning: '#F59E0B',
+        danger: '#EF4444',
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],

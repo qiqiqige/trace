@@ -2,7 +2,17 @@
 @tailwind components;
 @tailwind utilities;
 
-/* 全局样式 */
+/* 全局样式：统一背景与文字颜色，轻微光晕 */
 body {
+  /* Tailwind 字体 */
   @apply font-sans;
+
+  /* 统一文本颜色 */
+  color: #E6EAF2;
+
+  /* 统一背景（与动效融合）：暗色基底 + 两侧光晕 */
+  background:
+    radial-gradient(1200px 1200px at 30% -10%, rgba(124,58,237,0.25), rgba(11,18,32,0) 60%),
+    radial-gradient(800px 800px at 80% 110%, rgba(56,189,248,0.18), rgba(11,18,32,0) 40%),
+    #0B1220;
 }

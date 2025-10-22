@@ -1,450 +1,295 @@
 'use client';
 
-import { useEffect, useState } from "react";
-import { 
-  EyeOutlined, 
-  EyeInvisibleOutlined, 
-  UserOutlined, 
-  LockOutlined, 
-  CheckOutlined, 
-  GithubOutlined,
-  GoogleOutlined,
-  WechatOutlined,
-  ArrowRightOutlined,
-  LoadingOutlined,
-  FileTextOutlined,
-  BorderOutlined,
-  BookOutlined,
-  LinkOutlined,
-  ExclamationCircleOutlined,
-  PhoneOutlined
-} from '@ant-design/icons';
-import { Button, Checkbox, Input, Card } from 'antd';
-import BrandIcon from "../../../components/BrandIcon";
-import { motion } from "framer-motion" 
-import ForgotPasswordPage from "./components/ForgotPasswordPage";
-//Redux相关
-import { useDispatch, useSelector } from 'react-redux';
-import { AppDispatch, RootState } from '@/store'; //导入 Store 类型
-import { loginAsync, registerAsync, clearError } from '@/store/slices/authSlice'; //导入异步 Action
-import { LoginFormData, RegisterFormData } from '@/types'; //导入表单类型
+import Logo from '../components/Logo';
+import type { CSSProperties } from 'react';
+import { useMemo, useState, useEffect } from 'react';
+import RegisterPage from './components/RegisterPage';
+import ForgotPasswordPage from './components/ForgotPasswordPage';
+import { motion } from 'framer-motion';
+import LoginAnimationPage from './components/LoginAnimationPage';
 
-const containerVariants = {
-  hidden : {opacity :0,y:20},
-  visible :{opacity :1, y:0,transition :{duration:0.3}},
-  exit:{opacity:0, y:-20,transition:{duration:0.3}}
-};
+export default function LoginPage() {
+  const curve = 'cubic-bezier(0.22, 1, 0.36, 1)';
+  const duration = '400ms';
+  const [activeView, setActiveView] = useState<'login' | 'register' | 'reset'>('login');
+  const [notice, setNotice] = useState<string>('');
+  
+  //保持登陆页面正常显示
 
-const formFieldVariants = {
-  hidden :{opacity :0,y:0},
-  visible:{opacity:1,y:0,transition:{duration:0.2}}
-};
-
-const globalStyles = `
-  * {
-    user-select: none;
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-  }
-  input, textarea {
-    user-select: text;
-    -webkit-user-select: text;
-    -moz-user-select: text;
-    -ms-user-select: text;
-  }
-`;
-
-export default function LoginPage(){
-//Redux状态
-const dispatch = useDispatch<AppDispatch>();
-const {isLoading,error,isAuthenticated} = useSelector((state : RootState) => state.auth);
-
-
-//本地属性
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [usernameError, setUsernameError] = useState('');
-  const [passwordError, setPasswordError] = useState('');
-  const [isLogin, setIsLogin] = useState(true);
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [confirmPasswordError, setConfirmPasswordError] = useState('');
-  const [phone, setPhone] = useState('');
-  const [phoneError, setPhoneError] = useState('');
-  const [showForgotPassword, setShowForgotPassword] = useState(false);
-
+  const [vw, setVw] = useState<number>(typeof window !== 'undefined' ? window.innerWidth : 1200);
   useEffect(() => {
-    if (isAuthenticated) {
-      window.location.href = '/';
-    }
-  },[isAuthenticated]);
+    const onResize = () => setVw(window.innerWidth);
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+  const showLeft = vw >= 900;
+  const leftScale = showLeft ? Math.max(0.85, Math.min(1, 0.85 + ((vw - 900) / 600) * 0.15)) : 1;
 
-  useEffect(() => {
-    dispatch(clearError());
-  },[dispatch]);
+  //加载动画
+  const [showLoader, setShowLoader] = useState(false);
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    let isValid = true;
-    setUsernameError('');
-    setPasswordError('');
-    
-    // 简单验证
-    if (!username) {
-      setUsernameError('请输入用户名');
-      isValid = false;
-    }
-    
-    if (!password) {
-      setPasswordError('请输入密码');
-      isValid = false;
-    }
-    
-    // 模拟登录成功
-    if (isValid) {
-      const loginData : LoginFormData = {
-        username,
-        password,
-        rememberMe: true
-      };
-      await dispatch(loginAsync(loginData));
-          
-    }
+  //容器样式
+  const card: CSSProperties = useMemo(() => ({
+    width: 'min(92vw, 1200px)',
+    minHeight: 'min(80vh, 800px)',
+    borderRadius: 24,
+    background: 'rgba(11,18,32,0.55)',
+    backdropFilter: 'blur(20px) saturate(140%)',
+    WebkitBackdropFilter: 'blur(20px) saturate(140%)',
+    border: '1px solid rgba(124,58,237,0.35)',
+    boxShadow: '0 20px 50px rgba(16,24,40,0.35), inset 0 1px rgba(255,255,255,0.08)',
+    display: 'grid',
+    gridTemplateColumns: showLeft ? '1.2fr 1fr' : '1fr',
+    overflow: 'hidden'
+  }), [showLeft]);
+
+  const order = useMemo(() => ['login', 'register', 'reset'] as const, []);
+  const idxOf = (v: typeof order[number]) => order.indexOf(v);
+
+  const rightPanelBase: CSSProperties = {
+    position: 'relative',
+    padding: 32,
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    color: '#E6EAF2',
+    overflow: 'hidden',
+    minHeight: 460
   };
-  
-  const handleSubmit = async(e: React.FormEvent) => {
-    e.preventDefault();
-    let isValid = true;
-    setUsernameError('');
-    setPasswordError('');
-    setConfirmPasswordError('');
-    setPhoneError('');
-    
-    // 验证用户名
-    if (!username) {
-      setUsernameError('请输入用户名');
-      isValid = false;
-    }
-    
-    // 验证密码
-    if (!password) {
-      setPasswordError('请输入密码');
-      isValid = false;
-    } else if (password.length < 6) {
-      setPasswordError('密码长度不能少于6位');
-      isValid = false;
-    }
-    
-    // 注册时验证确认密码
-    if (!isLogin) {
-      if (!confirmPassword) {
-        setConfirmPasswordError('请输入确认密码');
-        isValid = false;
-      } else if (confirmPassword !== password) {
-        setConfirmPasswordError('两次输入的密码不一致');
-        isValid = false;
-      }
-    }
-    
-    // 手机号验证
-    if (!phone) {
-      setPhoneError('请输入手机号');
-      isValid = false;
-    } else if (!/^1[3-9]\d{9}$/.test(phone)) {
-      setPhoneError('请输入正确的手机号');
-      isValid = false;
-    }
-  
-    // 提交逻辑
-    if (isValid) {
-      const registerData : RegisterFormData = {
-        username,
-        password,
-        confirmPassword,
-        phone
-      };
-      const result = await dispatch(registerAsync(registerData));
-      if(registerAsync.fulfilled.match(result)){
-        setIsLogin(true);
-        alert('注册成功，请登录');
-      }
-    }
+
+  const rightPanelStyle: CSSProperties & { viewTransitionName?: string } = {
+    ...rightPanelBase,
+    viewTransitionName: 'cta-bubble',
+    willChange: 'transform, opacity'
   };
-  
-  return (
-    <div className="bg-neutral min-h-screen flex items-center justify-center p-4 font-sans ">
-      <style>{globalStyles}</style>
-      
-      {/*错误提示*/}
-      {error && (
-        <div className="mb-4 p-3 bg-danger/10 text-danger rounded-lg flex items-center gap-2">
-          <ExclamationCircleOutlined />
-          <span>{error}</span>
-        </div>
-      )}
-      {/* 登录容器 */}
-      <div className="w-full max-w-6xl bg-white rounded-2xl shadow-lg overflow-hidden flex flex-col md:flex-row transition-all duration-500 hover:shadow-[0_10px_30px_-5px_rgba(0,0,0,0.1)]" id="login-container">
-        
-        {/*左侧*/}
-        <div className="bg-gradient-to-br from-primary to-[#2C5282] text-white p-8 md:p-12 flex-1 flex flex-col justify-between relative overflow-hidden md:flex">
-          {/*装饰元素*/}
-          <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-32 -mt-32"></div>
-          <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/5 rounded-full -ml-24 -mb-24"></div>
-          
-          <div className="relative z-10">
-            {/*品牌标识*/}
-            <div className="flex items-center gap-3 mb-10">
-              <BrandIcon />
-              <h1 className="text-2xl font-bold">溯源</h1>
-            </div>
-            
-            {/*功能介绍*/}
-            <div className="space-y-8">
-              <div className="flex items-start gap-4 group p-3 rounded-lg hover:bg-white/5 transition-all duration-300">
-                <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center shrink-0 mt-1 transition-all duration-300 group-hover:bg-white/30">
-                  <FileTextOutlined />
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold mb-1">高效日报管理</h3>
-                  <p className="text-white/80 text-sm">轻松记录每日工作，自动关联任务进度</p>
-                </div>
-              </div>
-              
-              <div className="flex items-start gap-4 group p-3 rounded-lg hover:bg-white/5 transition-all duration-300">
-                <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center shrink-0 mt-1 transition-all duration-300 group-hover:bg-white/30">
-                  <BorderOutlined />
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold mb-1">可视化任务看板</h3>
-                  <p className="text-white/80 text-sm">拖拽式管理任务，直观查看项目进展</p>
-                </div>
-              </div>
-              
-              <div className="flex items-start gap-4 group p-3 rounded-lg hover:bg-white/5 transition-all duration-300">
-                <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center shrink-0 mt-1 transition-all duration-300 group-hover:bg-white/30">
-                  <BookOutlined />
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold mb-1">个人知识库</h3>
-                  <p className="text-white/80 text-sm">集中管理文档资料，构建个人知识体系</p>
-                </div>
-              </div>
-            </div>
+
+  //登陆按钮
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setShowLoader(true);
+  };
+
+  //登录页面
+  const LoginView = (
+    <div style={{ position: 'absolute', inset: 0, padding: 32, display: 'flex', flexDirection: 'column', justifyContent: 'center', color: '#E6EAF2' }}>
+      <div style={{ marginBottom: 18 }}>
+        <h3 style={{ fontSize: 24, fontWeight: 800, letterSpacing: '0.06em' }}>欢迎登录溯源</h3>
+        <p style={{ opacity: 0.75, marginTop: 6 }}>{notice || '请输入账号信息登录。'}</p>
+      </div>
+      <form onSubmit={handleSubmit} style={{ display: 'grid', gap: 16 }}>
+        {/* 用户名 */}
+        <div>
+          <label style={{ display: 'block', fontSize: 13, opacity: 0.8, marginBottom: 6 }}>用户名</label>
+          <div style={{ position: 'relative' }}>
+            <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', opacity: 0.7 }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="#C084FC" strokeWidth="1.6"/><path d="M4 21a8 8 0 0 1 16 0" stroke="#38BDF8" strokeWidth="1.6"/></svg>
+            </span>
+            <input
+              type="text"
+              placeholder="请输入用户名"
+              style={{
+                width: '100%', padding: '12px 14px 12px 38px', borderRadius: 12,
+                border: '1px solid rgba(230,234,242,0.25)', background: 'rgba(11,18,32,0.30)', color: '#E6EAF2', outline: 'none'
+              }}
+            />
           </div>
         </div>
-        
-        {/*右侧*/}
-        {showForgotPassword ? (
-            <ForgotPasswordPage onBack={() => setShowForgotPassword(false)}/>
-          ) : (  
-        <div className="p-8 md:p-12 flex-1 flex flex-col max-w-md w-full mx-auto">
-          <div className="mb-10 md:mt-6">
-            <h2 className="text-2xl font-bold text-gray-800 mb-2 flex items-center">
-              <BrandIcon />
-              {isLogin ? '欢迎登录溯源' : '创建新的账号'}
-            </h2>
-            <p className="text-gray-500">{isLogin ? '请输入账号信息登录系统' : '填写以下信息注册新账号'}</p>
+
+        {/* 密码 */}
+        <div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+            <label style={{ fontSize: 13, opacity: 0.8 }}>密码</label>
+            <a href="#" style={{ fontSize: 13, color: '#A78BFA' }} onClick={(e) => { e.preventDefault(); setActiveView('reset'); setNotice(''); }}>
+              忘记密码?
+            </a>
           </div>
-          {/*登录*/}
-                  
-            <form className="space-y-5" onSubmit={(e) => {isLogin ? handleLogin(e) : handleSubmit(e)}}>
-              <div>
-                <label htmlFor="username" className="block text-sm font-medium text-gray-500 mb-1">用户名</label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
-                    <UserOutlined />        
-                  </div>
-                  <input id='username' 
-                  placeholder="请输入用户名" 
-                  className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all duration-300"
-                  value={username}
-                  onChange={(e) => {setUsername(e.target.value);
-                  if(usernameError) setUsernameError('');
-                }}
+          <div style={{ position: 'relative' }}>
+            <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', opacity: 0.7 }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><rect x="5" y="10" width="14" height="10" rx="2" stroke="#C084FC" strokeWidth="1.6"/><path d="M9 10V8a3 3 0 1 1 6 0v2" stroke="#38BDF8" strokeWidth="1.6"/></svg>
+            </span>
+            <input
+              type="password"
+              placeholder="请输入密码"
+              style={{
+                width: '100%', padding: '12px 14px 12px 38px', borderRadius: 12,
+                border: '1px solid rgba(230,234,242,0.25)', background: 'rgba(11,18,32,0.30)', color: '#E6EAF2', outline: 'none'
+              }}
+            />
+          </div>
+        </div>
+
+        {/* 记住我 */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <input id="remember-me" type="checkbox" />
+          <label htmlFor="remember-me" style={{ fontSize: 13, opacity: 0.85 }}>记住我</label>
+        </div>
+
+        {/* 登录按钮 */}
+        <button
+          type="submit"
+          style={{
+            marginTop: 6, padding: '12px 20px', borderRadius: 9999,
+            background: 'rgba(124,58,237,0.24)', border: '1px solid rgba(124,58,237,0.45)',
+            color: '#E6EAF2', fontWeight: 600, letterSpacing: '0.06em',
+            boxShadow: '0 8px 30px rgba(124,58,237,0.20), inset 0 1px rgba(56,189,248,0.24)',
+            backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)'
+          }}
+        >
+          登录
+        </button>
+
+        {/* 去注册 */}
+        <div style={{ marginTop: 6, textAlign: 'center', fontSize: 13 }}>
+          还没有账号？
+          <a href="/register" style={{ color: '#A78BFA', marginLeft: 6 }} onClick={(e) => { e.preventDefault(); setActiveView('register'); setNotice(''); }}>
+            去注册
+          </a>
+        </div>
+      </form>
+    </div>
+  );
+
+  //切换动画
+  const renderViews = () => {
+    const active = idxOf(activeView);
+    const panels = [
+      { key: 'login', node: LoginView },
+      {
+        key: 'register',
+        node: (
+          <div style={{ position: 'absolute', inset: 0, padding: 32 }}>
+            <RegisterPage
+              onBackToLogin={() => { setActiveView('login'); setNotice(''); }}
+              onCompleted={() => { setActiveView('login'); setNotice('请完成登录'); }}
+            />
+          </div>
+        )
+      },
+      {
+        key: 'reset',
+        node: (
+          <div style={{ position: 'absolute', inset: 0, padding: 32 }}>
+            <ForgotPasswordPage
+              onBackToLogin={(msg?: string) => { setActiveView('login'); setNotice(msg || '请完成登录'); }}
+            />
+          </div>
+        )
+      }
+    ];
+    return panels.map((p, i) => {
+      const offset = (i - active) * 100;
+      return (
+        <div
+          key={p.key}
+          style={{
+            position: 'absolute',
+            inset: 0,
+            transform: `translateX(${offset}%)`,
+            opacity: i === active ? 1 : 0,
+            transition: `transform ${duration} ${curve}, opacity ${duration} ${curve}`,
+            pointerEvents: i === active ? 'auto' : 'none'
+          }}
+        >
+          {p.node}
+        </div>
+      );
+    });
+  };
+
+  return(
+    <div style={{ display: 'grid', placeItems: 'center', minHeight: '100vh', width: '100vw', padding: 24 }}>
+      <div style={card}>
+        {showLeft && (
+          <motion.div
+            style={{ position: 'relative', padding: 32, color: '#E6EAF2', transform: `scale(${leftScale})`, transformOrigin: 'left center' }}
+            initial={{ opacity: 0, y: 16, filter: 'blur(4px)' }}
+            animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+            transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div style={{ width: 40, height: 40 }}>
+                <Logo
+                  color="#A78BFA"
+                  cursorBallColor="#38BDF8"
+                  cursorBallSize={1.6}
+                  ballCount={10}
+                  animationSize={24}
+                  enableMouseInteraction={false}
+                  enableTransparency={true}
+                  hoverSmoothness={0.05}
+                  clumpFactor={1}
+                  speed={0.25}
                 />
-                {usernameError && (
-                  <div className="mt-1 text-danger text-sm flex items-center gap-1">
-                    <ExclamationCircleOutlined />
-                    <span>{usernameError}</span>
-                  </div>
-                )}
-                </div>
               </div>
+              <h1 style={{ fontSize: 22, fontWeight: 800, letterSpacing: '0.06em' }}>溯源系统</h1>
+            </div>
 
-              <div>
-                  <div className="flex justify-between mb-1">
-                    <label htmlFor="password" className="block text-sm font-medium text-gray-500">密码</label>
-                    {isLogin && (
-                    <a 
-                    href="#" 
-                    className="text-sm text-primary hover:underline transition-colors"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      setShowForgotPassword(true);
-                    }}
-                    >
-                      忘记密码？
-                    </a>
-                    )}
-                    
-                  </div>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
-                      <LockOutlined/>
-                    </div>
-                    <input 
-                    id="password"
-                    type={showPassword ? "text" : "password"}
-                    placeholder="请输入密码"
-                    className="w-full pl-10 pr-10 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all duration-300"
-                    value={password}
-                    onChange = {(e) => {
-                      setPassword(e.target.value);
-                      if (passwordError) setPasswordError('');
-                    }}
-                    />
-       
-                  <button
-                    type="button"
-                    className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600 transition-colors"
-                    onClick={() => setShowPassword(!showPassword)}
-                  >
-                    {showPassword ? <EyeOutlined /> : <EyeInvisibleOutlined />}
-                  </button>
-                  {passwordError && (
-                    <div className="mt-1 text-danger text-sm flex items-center gap-1">
-                    <ExclamationCircleOutlined />
-                    <span>{passwordError}</span>
-                  </div>
+          <div style={{ height: 56 }} />
+
+          <div style={{ display: 'grid', gap: 64, marginTop: 24, width: '80%', maxWidth: '80%' }}>
+            {[
+              { title: '高效日报管理', desc: '轻松记录每日工作，自动关联任务进度', icon: 'file' },
+              { title: '可视化任务看板', desc: '拖拽式管理任务，直观查看项目进展', icon: 'board' },
+              { title: '个人知识库', desc: '集中管理文档资料，构建个人知识体系', icon: 'book' },
+            ].map((item, idx) => (
+              <div key={idx} style={{ display: 'grid', gridTemplateColumns: '48px 1fr', gap: 20, alignItems: 'center' }}>
+                <div
+                  style={{
+                    width: 48,
+                    height: 48,
+                    borderRadius: 12,
+                    background: 'rgba(124,58,237,0.20)',
+                    border: '1px solid rgba(124,58,237,0.35)',
+                    boxShadow: 'inset 0 1px rgba(56,189,248,0.30)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
+                >
+                  {item.icon === 'file' && (
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                      <path d="M7 3h7l5 5v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z" stroke="#C084FC" strokeWidth="1.6"/>
+                      <path d="M14 3v5h5" stroke="#38BDF8" strokeWidth="1.6"/>
+                    </svg>
+                  )}
+                  {item.icon === 'board' && (
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                      <rect x="3" y="4" width="18" height="16" rx="2" stroke="#C084FC" strokeWidth="1.6"/>
+                      <path d="M9 4v16M15 4v16" stroke="#38BDF8" strokeWidth="1.6"/>
+                    </svg>
+                  )}
+                  {item.icon === 'book' && (
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                      <path d="M4 5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v15H6a2 2 0 0 1-2-2V5z" stroke="#C084FC" strokeWidth="1.6"/>
+                      <path d="M8 7h8" stroke="#38BDF8" strokeWidth="1.6"/>
+                    </svg>
                   )}
                 </div>
-              </div>
-              {!isLogin && (
                 <div>
-                      <div>
-                        <label htmlFor="confirm-password" className="block text-sm font-medium text-gray-500 mb-1">确认密码</label>
-                        <div className="relative">
-                          <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
-                            <LockOutlined/>
-                          </div>
-                          <input 
-                            id="confirm-password"
-                            type={showPassword ? "text" : "password"}
-                            placeholder="请再次输入密码"
-                            className="w-full pl-10 pr-10 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all duration-300"
-                            value={confirmPassword}
-                            onChange={(e) => {
-                              setConfirmPassword(e.target.value);
-                              if (confirmPasswordError) setConfirmPasswordError('');
-                            }}
-                          />
-                          {confirmPasswordError && (
-                            <div className="mt-1 text-danger text-sm flex items-center gap-1">
-                              <ExclamationCircleOutlined />
-                              <span>{confirmPasswordError}</span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                      <motion.div
-                        variants={formFieldVariants}
-                        className="relative"
-                      >
-                        <label htmlFor="phone" className="block text-sm font-medium text-gray-500 mb-1">手机号</label>
-                        <div className="relative">
-                          <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
-                            <PhoneOutlined />
-                          </div>
-                          <input 
-                            id="phone"
-                            type="tel"
-                            placeholder="请输入手机号"
-                            className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all duration-300"
-                            value={phone}
-                            onChange={(e) => {
-                              setPhone(e.target.value);
-                              if (phoneError) setPhoneError('');
-                            }}
-                          />
-                          {phoneError && (
-                            <div className="mt-1 text-danger text-sm flex items-center gap-1">
-                              <ExclamationCircleOutlined />
-                              <span>{phoneError}</span>
-                            </div>
-                          )}
-                        </div>
-                      </motion.div>
-                      </div> )}
-              {isLogin &&(
-              <div className="flex items-center">
-                <Checkbox id="remember-me" className="text-primary focus:ring-primary border-gray-300 rounded transition-all duration-300">
-                  记住我
-                </Checkbox>
-              </div>)}
-              
-            
-              <Button
-                type="primary"
-                htmlType="submit"
-                className="w-full bg-primary hover:bg-primary/90 text-white font-medium py-6 px-4 rounded-lg transition-all duration-300 flex items-center justify-center gap-2 transform hover:-translate-y-0.5 active:translate-y-0"
-                loading={isLoading}
-              >
-                <span>{isLogin ? '登录' : '注册'}</span>
-                <ArrowRightOutlined />
-              </Button>
-            </form>
-        
-              {/* 其他登录方式 */}
-            <div className="mt-8">
-              <div className="relative flex items-center">
-                <div className="flex-grow border-t border-gray-200"></div>
-                <span className="flex-shrink mx-3 text-gray-400 text-sm">其他登录方式</span>
-                <div className="flex-grow border-t border-gray-200"></div>
+                  <div style={{ fontWeight: 700, fontSize: 16 }}>{item.title}</div>
+                  <div style={{ opacity: 0.78, marginTop: 8 }}>{item.desc}</div>
+                </div>
               </div>
-              
-              <div className="flex justify-center gap-4 mt-6">
-                <button className="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-primary/5 hover:text-primary hover:border-primary/30 transition-all duration-300 transform hover:scale-110 active:scale-95">
-                  <GithubOutlined />
-                </button>
-                <button className="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-primary/5 hover:text-primary hover:border-primary/30 transition-all duration-300 transform hover:scale-110 active:scale-95">
-                  <GoogleOutlined />
-                </button>
-                <button className="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-primary/5 hover:text-primary hover:border-primary/30 transition-all duration-300 transform hover:scale-110 active:scale-95">
-                  <WechatOutlined />
-                </button>
-              </div>
-            </div>
-            
-            {/* 注册提示 */}
-            <div className="mt-8 text-center text-sm text-gray-500">
-              {isLogin ? (
-                <>
-                还没有账号？
-                <button
-                onClick={() => setIsLogin(false)}
-                className="text-primary font-medium hover:underline transition-colors ml-1"
-                >
-                  立即注册
-                </button>
-                </>
-              ) : (
-                <>
-                已有账号？
-                <button
-                 onClick={() => setIsLogin(true)}
-                 className="text-primary font-medium hover:underline transition-colors ml-1"
-                >
-                  立即登录
-                </button>
-                </>
-              )
-              }
-            </div>
-                  
-        </div>
-        )}
+            ))}
+          </div>
+        </motion.div>)}
+        <motion.div
+          style={rightPanelStyle}
+          initial={{ opacity: 0, x: 18, scale: 0.98 }}
+          animate={{ opacity: 1, x: 0, scale: 1 }}
+          transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+        >
+          {renderViews()}
+        </motion.div>
       </div>
-    </div> 
+
+      {showLoader && (
+        <LoginAnimationPage
+          task={async () => { await new Promise((r) => setTimeout(r, 1500)); }}
+          targetUrl="/index"
+          onDone={() => setShowLoader(false)}
+        />
+      )}
+    </div>
   );
 }
